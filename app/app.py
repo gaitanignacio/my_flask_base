@@ -1,16 +1,26 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from flask_swagger import swagger
+import socket
+
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/")
 def index():
-  return 'Index Page'
+    host_name = socket.gethostname()
+    host_ip = socket.gethostbyname(host_name)
+    return render_template('index.html', hostname=host_name, ip=host_ip)
 
-@app.route('/hello')
-def hello():
-  return 'Hello, greetings from different endpoint'
+@app.route("/spec")
+def spec():
+    return jsonify(swagger(app))
 
-#adding variables
+@app.route("/bbox")
+def summary():
+    d = {'bbox': [0.1, 0.1, 1, 1.5], 'class': 'cat'}
+    response = jsonify(d)
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
 @app.route('/user/<username>')
 def show_user(username):
   #returns the username
@@ -95,7 +105,5 @@ def upload_file():
         # or save it permanently to the file system
         static_file.save('/var/www/uploads/profilephoto.png')
 
-
-@app.route("/spec")
-def spec():
-    return jsonify(swagger(app))
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8080, debug=True)
